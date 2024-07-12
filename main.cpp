@@ -43,6 +43,24 @@ DWORD GetCurrentTrackNumber(MCI_OPEN_PARMS *pMciOpenParms, MCI_STATUS_PARMS *pMc
     return mciSendCommand(pMciOpenParms->wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)pMciStatusParms);
 }
 
+DWORD GetTrackLength(MCI_OPEN_PARMS *pMciOpenParms, MCI_STATUS_PARMS *pMciStatusParms, DWORD dwTrack) {
+    pMciStatusParms->dwItem = MCI_STATUS_LENGTH;
+    pMciStatusParms->dwTrack = dwTrack;
+    return mciSendCommand(pMciOpenParms->wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)pMciStatusParms);
+}
+
+DWORD GetCurrentPosition(MCI_OPEN_PARMS *pMciOpenParms, MCI_STATUS_PARMS *pMciStatusParms) {
+    pMciStatusParms->dwItem = MCI_STATUS_POSITION;
+    return mciSendCommand(pMciOpenParms->wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)pMciStatusParms);
+}
+
+DWORD ConvertToMilliseconds(DWORD time) {
+    DWORD minutes = MCI_MSF_MINUTE(time);
+    DWORD seconds = MCI_MSF_SECOND(time);
+    DWORD frames = MCI_MSF_FRAME(time);
+    return (minutes * 60000) + (seconds * 1000) + (frames * (1000 / 75));
+}
+
 int main() {
     MCI_OPEN_PARMS mciOpenParms;
     MCI_PLAY_PARMS mciPlayParms;
@@ -106,7 +124,18 @@ int main() {
                 return -1;
             }
             DWORD dwCurrentTrack = (DWORD) mciStatusParms.dwReturn;
-            std::cout << "Current track: " << dwCurrentTrack << std::endl;
+            if (DWORD dwStatus = GetCurrentPosition(&mciOpenParms, &mciStatusParms)) {
+                std::cerr << "Could not get the current position. Error code: " << dwStatus << std::endl;
+                return -1;
+            }
+            DWORD dwCurrentPosition = (DWORD)mciStatusParms.dwReturn;
+            if (DWORD dwStatus = GetTrackLength(&mciOpenParms, &mciStatusParms, dwCurrentTrack)) {
+                std::cerr << "Could not get the track length. Error code: " << dwStatus << std::endl;
+                return -1;
+            }
+            DWORD dwTrackLength = (DWORD)mciStatusParms.dwReturn;
+            std::cout << "Track " << dwCurrentTrack << ": " << ConvertToMilliseconds(dwCurrentPosition) << " ms / " << ConvertToMilliseconds(dwTrackLength) << " ms" << std::endl;
+
         }
         
     }  
