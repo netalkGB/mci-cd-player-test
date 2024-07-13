@@ -13,45 +13,45 @@ DWORD OpenCd(MCI_OPEN_PARMS *pMciOpenParms) {
     return mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD_PTR)pMciOpenParms);
 }
 
-DWORD GetTrackCount(MCI_OPEN_PARMS *pMciOpenParms, MCI_STATUS_PARMS *pMciStatusParms) {
+DWORD GetTrackCount(MCIDEVICEID wDeviceID, MCI_STATUS_PARMS *pMciStatusParms) {
     pMciStatusParms->dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
-    DWORD dwStatus = mciSendCommand(pMciOpenParms->wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)pMciStatusParms);
+    DWORD dwStatus = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)pMciStatusParms);
     return dwStatus;
 }
 
-DWORD GetTrackStart(MCI_OPEN_PARMS *pMciOpenParms, MCI_STATUS_PARMS *pMciStatusParms, DWORD dwTrack) {
+DWORD GetTrackStart(MCIDEVICEID wDeviceID, MCI_STATUS_PARMS *pMciStatusParms, DWORD dwTrack) {
     pMciStatusParms->dwItem = MCI_STATUS_POSITION;
     pMciStatusParms->dwTrack = dwTrack;
-    return mciSendCommand(pMciOpenParms->wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)pMciStatusParms);
+    return mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)pMciStatusParms);
 }
 
-DWORD Play(MCI_OPEN_PARMS *pMciOpenParms, MCI_PLAY_PARMS *pMciPlayParms, DWORD dwTrackStart) {
+DWORD Play(MCIDEVICEID wDeviceID, MCI_PLAY_PARMS *pMciPlayParms, DWORD dwTrackStart) {
     pMciPlayParms->dwFrom = dwTrackStart;
-    return mciSendCommand(pMciOpenParms->wDeviceID, MCI_PLAY, MCI_FROM, (DWORD_PTR)pMciPlayParms);
+    return mciSendCommand(wDeviceID, MCI_PLAY, MCI_FROM, (DWORD_PTR)pMciPlayParms);
 }
 
-DWORD Stop(MCI_OPEN_PARMS *pMciOpenParms, MCI_GENERIC_PARMS *pMciGenericParms) {
-    return mciSendCommand(pMciOpenParms->wDeviceID, MCI_STOP, 0, (DWORD_PTR)pMciGenericParms);
+DWORD Stop(MCIDEVICEID wDeviceID, MCI_GENERIC_PARMS *pMciGenericParms) {
+    return mciSendCommand(wDeviceID, MCI_STOP, 0, (DWORD_PTR)pMciGenericParms);
 }
 
-DWORD CloseCd(MCI_OPEN_PARMS *pMciOpenParms, MCI_GENERIC_PARMS *pMciGenericParms) {
-    return mciSendCommand(pMciOpenParms->wDeviceID, MCI_CLOSE, 0, (DWORD_PTR)pMciGenericParms);
+DWORD CloseCd(MCIDEVICEID wDeviceID, MCI_GENERIC_PARMS *pMciGenericParms) {
+    return mciSendCommand(wDeviceID, MCI_CLOSE, 0, (DWORD_PTR)pMciGenericParms);
 }
 
-DWORD GetCurrentTrackNumber(MCI_OPEN_PARMS *pMciOpenParms, MCI_STATUS_PARMS *pMciStatusParms) {
+DWORD GetCurrentTrackNumber(MCIDEVICEID wDeviceID, MCI_STATUS_PARMS *pMciStatusParms) {
     pMciStatusParms->dwItem = MCI_STATUS_CURRENT_TRACK;
-    return mciSendCommand(pMciOpenParms->wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)pMciStatusParms);
+    return mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)pMciStatusParms);
 }
 
-DWORD GetTrackLength(MCI_OPEN_PARMS *pMciOpenParms, MCI_STATUS_PARMS *pMciStatusParms, DWORD dwTrack) {
+DWORD GetTrackLength(MCIDEVICEID wDeviceID, MCI_STATUS_PARMS *pMciStatusParms, DWORD dwTrack) {
     pMciStatusParms->dwItem = MCI_STATUS_LENGTH;
     pMciStatusParms->dwTrack = dwTrack;
-    return mciSendCommand(pMciOpenParms->wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)pMciStatusParms);
+    return mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)pMciStatusParms);
 }
 
-DWORD GetCurrentPosition(MCI_OPEN_PARMS *pMciOpenParms, MCI_STATUS_PARMS *pMciStatusParms) {
+DWORD GetCurrentPosition(MCIDEVICEID wDeviceID, MCI_STATUS_PARMS *pMciStatusParms) {
     pMciStatusParms->dwItem = MCI_STATUS_POSITION;
-    return mciSendCommand(pMciOpenParms->wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)pMciStatusParms);
+    return mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)pMciStatusParms);
 }
 
 DWORD ConvertToMilliseconds(DWORD time) {
@@ -71,9 +71,10 @@ int main() {
         std::cerr << "Could not open CD drive." << std::endl;
         return -1;
     }
+    MCIDEVICEID wDeviceID = mciOpenParms.wDeviceID;
 
-    if (DWORD dwStatus = GetTrackCount(&mciOpenParms, &mciStatusParms)) {
-        CloseCd(&mciOpenParms, &mciGenericParms);
+    if (DWORD dwStatus = GetTrackCount(wDeviceID, &mciStatusParms)) {
+        CloseCd(wDeviceID, &mciGenericParms);
         std::cerr << "The number of tracks could not be retrieved. Error code: " << dwStatus << std::endl;
         return -1;
     }
@@ -81,15 +82,15 @@ int main() {
     std::cout << "Track count: " << numTracks << std::endl;
 
     
-    if (DWORD dwStatus = GetTrackStart(&mciOpenParms, &mciStatusParms, 1)) {
-        CloseCd(&mciOpenParms, &mciGenericParms);
+    if (DWORD dwStatus = GetTrackStart(wDeviceID, &mciStatusParms, 1)) {
+        CloseCd(wDeviceID, &mciGenericParms);
         std::cerr << "Could not get the start position of the track. Error code: " << dwStatus << std::endl;
         return -1;
     }
     DWORD dwTrackStart = (DWORD) mciStatusParms.dwReturn;
 
-    if (DWORD dwStatus = Play(&mciOpenParms, &mciPlayParms, dwTrackStart)) {
-        CloseCd(&mciOpenParms, &mciGenericParms);
+    if (DWORD dwStatus = Play(wDeviceID, &mciPlayParms, dwTrackStart)) {
+        CloseCd(wDeviceID, &mciGenericParms);
         std::cerr << "The CD could not be played. Error Code: " << dwStatus << std::endl;
         return -1;
     }
@@ -98,38 +99,36 @@ int main() {
         std::string str;
         std::cin >> str;
         if (str == "q") {
-            Stop(&mciOpenParms, &mciGenericParms);
-            CloseCd(&mciOpenParms, &mciGenericParms);
+            Stop(wDeviceID, &mciGenericParms);
+            CloseCd(wDeviceID, &mciGenericParms);
             break;
-        }
-        else if (str[0] == 't') {
+        } else if (str[0] == 't') {
             int track = std::stoi(str.substr(1));
 
-            Stop(&mciOpenParms, &mciGenericParms);
-            if (DWORD dwStatus = GetTrackStart(&mciOpenParms, &mciStatusParms, track)) {
-                CloseCd(&mciOpenParms, &mciGenericParms);
+            Stop(wDeviceID, &mciGenericParms);
+            if (DWORD dwStatus = GetTrackStart(wDeviceID, &mciStatusParms, track)) {
+                CloseCd(wDeviceID, &mciGenericParms);
                 std::cerr << "Could not get the start position of the track. Error code: " << dwStatus << std::endl;
                 return -1;
             }
             DWORD dwTrackStart = (DWORD) mciStatusParms.dwReturn;
-            if (DWORD dwStatus = Play(&mciOpenParms, &mciPlayParms, dwTrackStart)) {
-                CloseCd(&mciOpenParms, &mciGenericParms);
+            if (DWORD dwStatus = Play(wDeviceID, &mciPlayParms, dwTrackStart)) {
+                CloseCd(wDeviceID, &mciGenericParms);
                 std::cerr << "#The CD could not be played. Error Code: " << dwStatus << std::endl;
                 return -1;
             }
-        }
-        else if (str == "ct") {
-            if (DWORD dwStatus = GetCurrentTrackNumber(&mciOpenParms, &mciStatusParms)) {
+        } else if (str == "ct") {
+            if (DWORD dwStatus = GetCurrentTrackNumber(wDeviceID, &mciStatusParms)) {
                 std::cerr << "Could not get the current track number. Error code: " << dwStatus << std::endl;
                 return -1;
             }
             DWORD dwCurrentTrack = (DWORD) mciStatusParms.dwReturn;
-            if (DWORD dwStatus = GetCurrentPosition(&mciOpenParms, &mciStatusParms)) {
+            if (DWORD dwStatus = GetCurrentPosition(wDeviceID, &mciStatusParms)) {
                 std::cerr << "Could not get the current position. Error code: " << dwStatus << std::endl;
                 return -1;
             }
             DWORD dwCurrentPosition = (DWORD)mciStatusParms.dwReturn;
-            if (DWORD dwStatus = GetTrackLength(&mciOpenParms, &mciStatusParms, dwCurrentTrack)) {
+            if (DWORD dwStatus = GetTrackLength(wDeviceID, &mciStatusParms, dwCurrentTrack)) {
                 std::cerr << "Could not get the track length. Error code: " << dwStatus << std::endl;
                 return -1;
             }
