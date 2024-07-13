@@ -62,11 +62,10 @@ DWORD ConvertToMilliseconds(DWORD time) {
 }
 
 int main() {
-    MCI_OPEN_PARMS mciOpenParms;
-    MCI_PLAY_PARMS mciPlayParms;
     MCI_STATUS_PARMS mciStatusParms;
     MCI_GENERIC_PARMS mciGenericParms;
 
+    MCI_OPEN_PARMS mciOpenParms;
     if (OpenCd(&mciOpenParms)) {
         std::cerr << "Could not open CD drive." << std::endl;
         return -1;
@@ -89,6 +88,7 @@ int main() {
     }
     DWORD dwTrackStart = (DWORD) mciStatusParms.dwReturn;
 
+    MCI_PLAY_PARMS mciPlayParms;
     if (DWORD dwStatus = Play(wDeviceID, &mciPlayParms, dwTrackStart)) {
         CloseCd(wDeviceID, &mciGenericParms);
         std::cerr << "The CD could not be played. Error Code: " << dwStatus << std::endl;
@@ -112,6 +112,7 @@ int main() {
                 return -1;
             }
             DWORD dwTrackStart = (DWORD) mciStatusParms.dwReturn;
+            MCI_PLAY_PARMS mciPlayParms;
             if (DWORD dwStatus = Play(wDeviceID, &mciPlayParms, dwTrackStart)) {
                 CloseCd(wDeviceID, &mciGenericParms);
                 std::cerr << "#The CD could not be played. Error Code: " << dwStatus << std::endl;
