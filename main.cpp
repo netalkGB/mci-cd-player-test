@@ -34,6 +34,14 @@ DWORD Stop(MCIDEVICEID wDeviceID, MCI_GENERIC_PARMS *pMciGenericParms) {
     return mciSendCommand(wDeviceID, MCI_STOP, 0, (DWORD_PTR)pMciGenericParms);
 }
 
+DWORD Pause(MCIDEVICEID wDeviceID) {
+    return mciSendCommand(wDeviceID, MCI_PAUSE, 0, 0);
+}
+
+DWORD Resume(MCIDEVICEID wDeviceID) {
+    return mciSendCommand(wDeviceID, MCI_RESUME, 0, 0);
+}
+
 DWORD CloseCd(MCIDEVICEID wDeviceID, MCI_GENERIC_PARMS *pMciGenericParms) {
     return mciSendCommand(wDeviceID, MCI_CLOSE, 0, (DWORD_PTR)pMciGenericParms);
 }
@@ -64,8 +72,9 @@ DWORD ConvertToMilliseconds(DWORD time) {
 int main() {
     MCI_STATUS_PARMS mciStatusParms;
     MCI_GENERIC_PARMS mciGenericParms;
-
     MCI_OPEN_PARMS mciOpenParms;
+
+
     if (OpenCd(&mciOpenParms)) {
         std::cerr << "Could not open CD drive." << std::endl;
         return -1;
@@ -136,6 +145,16 @@ int main() {
             DWORD dwTrackLength = (DWORD)mciStatusParms.dwReturn;
             std::cout << "Track " << dwCurrentTrack << ": " << ConvertToMilliseconds(dwCurrentPosition) << " ms / " << ConvertToMilliseconds(dwTrackLength) << " ms" << std::endl;
 
+        } else if (str == "p") {
+            if (DWORD dwStatus = Pause(wDeviceID)) {
+				std::cerr << "Could not pause the CD. Error code: " << dwStatus << std::endl;
+				return -1;
+			}
+        } else if (str == "cp") {
+            if (DWORD dwStatus = Resume(wDeviceID)) {
+               std::cerr << "Could not resume the CD. Error code: " << dwStatus << std::endl;
+               return -1;
+            }
         }
         
     }  
